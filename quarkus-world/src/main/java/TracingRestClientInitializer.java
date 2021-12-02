@@ -2,10 +2,6 @@ import javax.ws.rs.Priorities;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientResponseContext;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.DynamicFeature;
-import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 import javax.ws.rs.ext.Provider;
@@ -19,14 +15,9 @@ import java.util.logging.Logger;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.jaxrs2.client.ClientSpanDecorator;
-import io.opentracing.contrib.jaxrs2.client.ClientTracingFeature;
-import io.opentracing.contrib.jaxrs2.client.ClientTracingFilter;
 import io.opentracing.contrib.jaxrs2.client.ClientTracingInterceptor;
 import io.opentracing.contrib.jaxrs2.internal.URIUtils;
 import io.opentracing.contrib.jaxrs2.serialization.InterceptorSpanDecorator;
-import io.opentracing.contrib.jaxrs2.server.OperationNameProvider;
-import io.opentracing.contrib.jaxrs2.server.ServerSpanDecorator;
-import io.opentracing.contrib.jaxrs2.server.ServerTracingDynamicFeature;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.GlobalTracer;
 
@@ -34,19 +25,19 @@ import io.opentracing.util.GlobalTracer;
 public class TracingRestClientInitializer implements Feature {
     private static final Logger log = Logger.getLogger(TracingRestClientInitializer.class.getName());
 
-    private TracingRestClientInitializer.Builder builder;
+    private Builder builder;
 
     /**
      * When using this constructor application has to call {@link GlobalTracer#registerIfAbsent(Tracer)} to register
      * tracer instance.
      *
-     * For a custom configuration use {@link TracingRestClientInitializer.Builder#build()}.
+     * For a custom configuration use {@link Builder#build()}.
      */
     public TracingRestClientInitializer() {
-        this(new TracingRestClientInitializer.Builder(GlobalTracer.get()));
+        this(new Builder(GlobalTracer.get()));
     }
 
-    private TracingRestClientInitializer(TracingRestClientInitializer.Builder builder) {
+    private TracingRestClientInitializer(Builder builder) {
         this.builder = builder;
     }
 
@@ -116,7 +107,7 @@ public class TracingRestClientInitializer implements Feature {
          * Set span decorators.
          * @return builder
          */
-        public TracingRestClientInitializer.Builder withDecorators(List<ClientSpanDecorator> spanDecorators) {
+        public Builder withDecorators(List<ClientSpanDecorator> spanDecorators) {
             this.spanDecorators = spanDecorators;
             return this;
         }
@@ -125,7 +116,7 @@ public class TracingRestClientInitializer implements Feature {
          * Set serialization span decorators.
          * @return builder
          */
-        public TracingRestClientInitializer.Builder withSerializationDecorators(List<InterceptorSpanDecorator> spanDecorators) {
+        public Builder withSerializationDecorators(List<InterceptorSpanDecorator> spanDecorators) {
             this.serializationSpanDecorators = spanDecorators;
             return this;
         }
@@ -137,7 +128,7 @@ public class TracingRestClientInitializer implements Feature {
          *
          * @see Priorities
          */
-        public TracingRestClientInitializer.Builder withPriority(int priority) {
+        public Builder withPriority(int priority) {
             this.priority = priority;
             return this;
         }
@@ -149,7 +140,7 @@ public class TracingRestClientInitializer implements Feature {
          *
          * @see Priorities
          */
-        public TracingRestClientInitializer.Builder withSerializationPriority(int serializationPriority) {
+        public Builder withSerializationPriority(int serializationPriority) {
             this.serializationPriority = serializationPriority;
             return this;
         }
@@ -158,7 +149,7 @@ public class TracingRestClientInitializer implements Feature {
          * @param traceSerialization whether to trace serialization
          * @return builder
          */
-        public TracingRestClientInitializer.Builder withTraceSerialization(boolean traceSerialization) {
+        public Builder withTraceSerialization(boolean traceSerialization) {
             this.traceSerialization = traceSerialization;
             return this;
         }

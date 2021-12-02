@@ -14,7 +14,12 @@ docker-compose -f .\docker-compose-dep.yml up
 
 Open a terminal for each applications
 
-cd quarkus-hello
+
+
+cd quarkus-hello-original  (if you want to compare to the original project without extending Jaeger)
+mvn quarkus:dev "-Ddebug=5006"
+
+cd quarkus-hello (in development)
 mvn quarkus:dev "-Ddebug=5006"
 
 cd quarkus-world
