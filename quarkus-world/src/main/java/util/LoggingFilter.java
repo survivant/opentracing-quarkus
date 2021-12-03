@@ -46,8 +46,12 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     /**
      * The Mapper.
      */
+    static ObjectMapper mapper;
+
     @Inject
-    ObjectMapper mapper;
+    public LoggingFilter(ObjectMapper objectMapper){
+        mapper = objectMapper;
+    }
 
     /**
      * Log the incoming request received (Method + body in json)
@@ -59,23 +63,10 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         final var method = context.getMethod();
         final var path = info.getPath();
         final var address = request.remoteAddress().toString();
-        var content = "";
-
-        try {
-            var original = IOUtils.toString(context.getEntityStream(), StandardCharsets.UTF_8);
-            content = original.replaceAll("\\r", "").replaceAll("\\n", "");
-            var in = IOUtils.toInputStream(original, StandardCharsets.UTF_8);
-            context.setEntityStream(in);
-        } catch (Exception ignored) {
-        }
+        var content = getRequestBody(context);
 
         logRequestIfNeeded(method, path, address, content);
 
-    }
-
-    private void logRequestIfNeeded(String method, String path, String address, String content) {
-        // default
-        LOGGER.debug("Request [{}] [{}] from IP [{}] Body [{}]", method, path, address, content);
     }
 
     /**
@@ -91,22 +82,9 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         final var address = request.remoteAddress().toString();
         final var status = containerResponseContext.getStatus();
 
-        var content = "";
-
-        try {
-            if (containerResponseContext.hasEntity()) {
-                var original = mapper.writeValueAsString(containerResponseContext.getEntity());
-                content = original.replaceAll("\\r", "").replaceAll("\\n", "");
-            }
-        } catch (Exception ignored) {
-        }
+        var content = getResponseBody(containerResponseContext);
 
         logResponseIfNeeded(method, status, address, content);
-    }
-
-    private void logResponseIfNeeded(String method, int status, String address, String content) {
-        // default
-        LOGGER.debug("RestClient response [{}] Status code [{}] to IP [{}] Body [{}]", method, status, address, content);
     }
 
     /**
@@ -119,21 +97,9 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
     public void filter(ClientRequestContext clientRequestContext) throws IOException {
         final var method = clientRequestContext.getMethod();
         final var address = clientRequestContext.getUri().toString();
-        var content = "";
-
-        try {
-            if (clientRequestContext.hasEntity()) {
-                var original = mapper.writeValueAsString(clientRequestContext.getEntity());
-                content = original.replaceAll("\\r", "").replaceAll("\\n", "");
-            }
-        } catch (Exception ignored) {
-        }
+        var content = getRequestBody(clientRequestContext);
 
         logRequestIfNeeded(method, address, content);
-    }
-
-    private void logRequestIfNeeded(String method, String address, String content) {
-        LOGGER.debug("RestClient request [{}] to IP [{}] Body [{}]", method, address, content);
     }
 
     /**
@@ -148,16 +114,83 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         final var method = clientRequestContext.getMethod();
         final var address = clientRequestContext.getUri().toString();
         final var status = clientResponseContext.getStatus();
-        var content = "";
-
-        try {
-            var original = IOUtils.toString(clientResponseContext.getEntityStream(), StandardCharsets.UTF_8);
-            content = original.replaceAll("\\r", "").replaceAll("\\n", "");
-            var in = IOUtils.toInputStream(original, StandardCharsets.UTF_8);
-            clientResponseContext.setEntityStream(in);
-        } catch (Exception ignored) {
-        }
+        var content = getResponseBody(clientResponseContext);
 
         logResponseIfNeeded(method, status, address, content);
     }
+
+    private void logRequestIfNeeded(String method, String address, String content) {
+        LOGGER.debug("RestClient request [{}] to IP [{}] Body [{}]", method, address, content);
+    }
+
+    private void logRequestIfNeeded(String method, String path, String address, String content) {
+        // default
+        LOGGER.debug("Request [{}] [{}] from IP [{}] Body [{}]", method, path, address, content);
+    }
+
+    private void logResponseIfNeeded(String method, int status, String address, String content) {
+        // default
+        LOGGER.debug("RestClient response [{}] Status code [{}] to IP [{}] Body [{}]", method, status, address, content);
+    }
+
+    public static String getRequestBody(ClientRequestContext clientRequestContext) {
+        var content = "";
+        try {
+            if (clientRequestContext.hasEntity()) {
+                var original = mapper.writeValueAsString(clientRequestContext.getEntity());
+                content = original.replaceAll("[\r\n]+", " ");
+            }
+        } catch (Exception ignored) {
+        }
+
+        return content;
+    }
+
+    public static String getRequestBody(ContainerRequestContext requestContext) {
+        var content = "";
+
+        if(requestContext.hasEntity()) {
+            try {
+                var original = IOUtils.toString(requestContext.getEntityStream(), StandardCharsets.UTF_8);
+                content = original.replaceAll("[\r\n]+", " ");
+                var in = IOUtils.toInputStream(original, StandardCharsets.UTF_8);
+                requestContext.setEntityStream(in);
+            } catch (IOException e) {
+                content = e.toString();
+            }
+        }
+
+        return content;
+    }
+
+    public static String getResponseBody(ClientResponseContext clientResponseContext) {
+        var content = "";
+
+        if(clientResponseContext.hasEntity()) {
+            try {
+                var original = IOUtils.toString(clientResponseContext.getEntityStream(), StandardCharsets.UTF_8);
+                content = original.replaceAll("[\r\n]+", " ");
+                var in = IOUtils.toInputStream(original, StandardCharsets.UTF_8);
+                clientResponseContext.setEntityStream(in);
+            } catch (IOException e) {
+                content = e.toString();
+            }
+        }
+
+        return content;
+    }
+
+    public static String getResponseBody(ContainerResponseContext containerResponseContext) {
+        var content = "";
+        try {
+            if (containerResponseContext.hasEntity()) {
+                var original = mapper.writeValueAsString(containerResponseContext.getEntity());
+                content = original.replaceAll("[\r\n]+", " ");
+            }
+        } catch (Exception ignored) {
+        }
+
+        return content;
+    }
+
 }

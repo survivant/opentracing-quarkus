@@ -5,10 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 
 @Path("/hello")
@@ -27,6 +24,18 @@ public class HelloResource {
             name = worldResource.world();
         }
         return "hello " + name;
+    }
+
+    @Path("/{name}")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public String helloPost(@PathParam("name") @NotNull String name, String body) {
+        LOG.info("called hello POST");
+        if(name.equals("world")) {
+            name = worldResource.world();
+        }
+        return "hello POST " + name;
     }
 
 }

@@ -1,11 +1,8 @@
+import javax.inject.Inject;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientResponseContext;
-import javax.ws.rs.container.ContainerRequestContext;
-import javax.ws.rs.container.ContainerResponseContext;
-import javax.ws.rs.container.DynamicFeature;
-import javax.ws.rs.container.ResourceInfo;
 import javax.ws.rs.core.Feature;
 import javax.ws.rs.core.FeatureContext;
 import javax.ws.rs.ext.Provider;
@@ -16,23 +13,22 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
 import io.opentracing.contrib.jaxrs2.client.ClientSpanDecorator;
-import io.opentracing.contrib.jaxrs2.client.ClientTracingFeature;
-import io.opentracing.contrib.jaxrs2.client.ClientTracingFilter;
 import io.opentracing.contrib.jaxrs2.client.ClientTracingInterceptor;
 import io.opentracing.contrib.jaxrs2.internal.URIUtils;
 import io.opentracing.contrib.jaxrs2.serialization.InterceptorSpanDecorator;
-import io.opentracing.contrib.jaxrs2.server.OperationNameProvider;
-import io.opentracing.contrib.jaxrs2.server.ServerSpanDecorator;
-import io.opentracing.contrib.jaxrs2.server.ServerTracingDynamicFeature;
 import io.opentracing.tag.Tags;
 import io.opentracing.util.GlobalTracer;
 
 @Provider
 public class TracingRestClientInitializer implements Feature {
     private static final Logger log = Logger.getLogger(TracingRestClientInitializer.class.getName());
+
+    @Inject
+    ObjectMapper mapper;
 
     private TracingRestClientInitializer.Builder builder;
 
@@ -92,16 +88,18 @@ public class TracingRestClientInitializer implements Feature {
 
                     Tags.HTTP_METHOD.set(span, requestContext.getMethod());
 
-                    String url = URIUtils.url(requestContext.getUri());
+                    var url = URIUtils.url(requestContext.getUri());
                     if (url != null) {
                         Tags.HTTP_URL.set(span, url);
                     }
 
-                    span.setTag("rest-patate", "coucou");
+                    span.setTag("http.headers", requestContext.getHeaders().toString());
+                    span.setTag("http.request.body", util.LoggingFilter.getRequestBody(requestContext));
                 }
 
                 @Override
                 public void decorateResponse(ClientResponseContext responseContext, Span span) {
+                    span.setTag("http.response.body", util.LoggingFilter.getResponseBody(responseContext));
                     Tags.HTTP_STATUS.set(span, responseContext.getStatus());
                 }
             });
@@ -170,6 +168,7 @@ public class TracingRestClientInitializer implements Feature {
             return new TracingRestClientInitializer(this);
         }
     }
+
 }
 
 

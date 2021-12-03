@@ -27,7 +27,11 @@ mvn quarkus:dev
 
 #3 - send a command to this the workflow
 
+test GET
 curl http://localhost:8080/hello/world
+
+test POST
+curl -X POST http://localhost:8080/hello/world -H "Content-Type: application/json" -d '{"productId": 123456, "quantity": 100}'
 
 
 #4 - open jaeger
