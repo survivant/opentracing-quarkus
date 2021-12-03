@@ -3,6 +3,9 @@ Demo for using opentracing/jaeger with quarkus
 
 # [documentation here](https://guhilling.github.io/opentracing-quarkus/)
 
+#0 - build the projets
+open a terminal in the root
+mvn install "-DskipTests"
 
 #1 - To START the database and jaeger
 

@@ -22,6 +22,7 @@
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
     </properties>
     <modules>
+        <module>quarkus-tracing</module>
         <module>quarkus-hello</module>
         <module>quarkus-world</module>
     </modules>
