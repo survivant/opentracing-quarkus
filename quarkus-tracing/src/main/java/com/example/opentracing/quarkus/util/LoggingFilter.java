@@ -1,4 +1,4 @@
-package util;
+package com.example.opentracing.quarkus.util;
 
 import javax.inject.Inject;
 import javax.ws.rs.client.ClientRequestContext;
@@ -31,23 +31,19 @@ import io.vertx.core.http.HttpServerRequest;
 public class LoggingFilter implements ContainerRequestFilter, ContainerResponseFilter, ClientRequestFilter, ClientResponseFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(LoggingFilter.class);
 
-    /**
-     * The Info.
-     */
     @Context
     UriInfo info;
 
-    /**
-     * The Request.
-     */
     @Context
     HttpServerRequest request;
 
-    /**
-     * The Mapper.
-     */
     static ObjectMapper mapper;
 
+    /**
+     * Instantiates a new Logging filter.
+     *
+     * @param objectMapper the object mapper
+     */
     @Inject
     public LoggingFilter(ObjectMapper objectMapper){
         mapper = objectMapper;
@@ -66,7 +62,6 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         var content = getRequestBody(context);
 
         logRequestIfNeeded(method, path, address, content);
-
     }
 
     /**
@@ -119,20 +114,12 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         logResponseIfNeeded(method, status, address, content);
     }
 
-    private void logRequestIfNeeded(String method, String address, String content) {
-        LOGGER.debug("RestClient request [{}] to IP [{}] Body [{}]", method, address, content);
-    }
-
-    private void logRequestIfNeeded(String method, String path, String address, String content) {
-        // default
-        LOGGER.debug("Request [{}] [{}] from IP [{}] Body [{}]", method, path, address, content);
-    }
-
-    private void logResponseIfNeeded(String method, int status, String address, String content) {
-        // default
-        LOGGER.debug("RestClient response [{}] Status code [{}] to IP [{}] Body [{}]", method, status, address, content);
-    }
-
+    /**
+     * Gets request body.
+     *
+     * @param clientRequestContext the client request context
+     * @return the request body
+     */
     public static String getRequestBody(ClientRequestContext clientRequestContext) {
         var content = "";
         try {
@@ -146,6 +133,12 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         return content;
     }
 
+    /**
+     * Gets request body.
+     *
+     * @param requestContext the request context
+     * @return the request body
+     */
     public static String getRequestBody(ContainerRequestContext requestContext) {
         var content = "";
 
@@ -163,6 +156,12 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
         return content;
     }
 
+    /**
+     * Gets response body.
+     *
+     * @param clientResponseContext the client response context
+     * @return the response body
+     */
     public static String getResponseBody(ClientResponseContext clientResponseContext) {
         var content = "";
 
@@ -172,14 +171,20 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
                 content = original.replaceAll("[\r\n]+", " ");
                 var in = IOUtils.toInputStream(original, StandardCharsets.UTF_8);
                 clientResponseContext.setEntityStream(in);
-            } catch (IOException e) {
-                content = e.toString();
+            } catch (IOException ignored) {
+
             }
         }
 
         return content;
     }
 
+    /**
+     * Gets response body.
+     *
+     * @param containerResponseContext the container response context
+     * @return the response body
+     */
     public static String getResponseBody(ContainerResponseContext containerResponseContext) {
         var content = "";
         try {
@@ -192,5 +197,21 @@ public class LoggingFilter implements ContainerRequestFilter, ContainerResponseF
 
         return content;
     }
+
+    private void logRequestIfNeeded(String method, String address, String content) {
+        // default
+        LOGGER.debug("RestClient request [{}] to IP [{}] Body [{}]", method, address, content);
+    }
+
+    private void logRequestIfNeeded(String method, String path, String address, String content) {
+        // default
+        LOGGER.debug("Request [{}] [{}] from IP [{}] Body [{}]", method, path, address, content);
+    }
+
+    private void logResponseIfNeeded(String method, int status, String address, String content) {
+        // default
+        LOGGER.debug("RestClient response [{}] Status code [{}] to IP [{}] Body [{}]", method, status, address, content);
+    }
+
 
 }

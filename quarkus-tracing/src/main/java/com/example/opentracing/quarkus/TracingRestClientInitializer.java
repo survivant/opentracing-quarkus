@@ -1,3 +1,5 @@
+package com.example.opentracing.quarkus;
+
 import javax.inject.Inject;
 import javax.ws.rs.Priorities;
 import javax.ws.rs.client.Client;
@@ -13,6 +15,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
+import com.example.opentracing.TracingConstant;
+import com.example.opentracing.quarkus.util.LoggingFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentracing.Span;
 import io.opentracing.Tracer;
@@ -93,13 +97,13 @@ public class TracingRestClientInitializer implements Feature {
                         Tags.HTTP_URL.set(span, url);
                     }
 
-                    span.setTag("http.headers", requestContext.getHeaders().toString());
-                    span.setTag("http.request.body", util.LoggingFilter.getRequestBody(requestContext));
+                    span.setTag(TracingConstant.TRACING_HTTP_HEADERS, requestContext.getHeaders().toString());
+                    span.setTag(TracingConstant.TRACING_HTTP_REQUEST_BODY, LoggingFilter.getRequestBody(requestContext));
                 }
 
                 @Override
                 public void decorateResponse(ClientResponseContext responseContext, Span span) {
-                    span.setTag("http.response.body", util.LoggingFilter.getResponseBody(responseContext));
+                    span.setTag(TracingConstant.TRACING_HTTP_RESPONSE_BODY, LoggingFilter.getResponseBody(responseContext));
                     Tags.HTTP_STATUS.set(span, responseContext.getStatus());
                 }
             });

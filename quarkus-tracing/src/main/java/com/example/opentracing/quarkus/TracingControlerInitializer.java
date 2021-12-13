@@ -1,3 +1,5 @@
+package com.example.opentracing.quarkus;
+
 import javax.inject.Inject;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerResponseContext;
@@ -8,6 +10,8 @@ import javax.ws.rs.ext.Provider;
 import java.util.Collections;
 
 
+import com.example.opentracing.TracingConstant;
+import com.example.opentracing.quarkus.util.LoggingFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.opentracing.Span;
 import io.opentracing.contrib.jaxrs2.internal.URIUtils;
@@ -37,13 +41,13 @@ public class TracingControlerInitializer implements DynamicFeature {
                                 Tags.HTTP_URL.set(span, url);
                             }
 
-                            span.setTag("http.headers", requestContext.getHeaders().toString());
-                            span.setTag("http.request.body", util.LoggingFilter.getRequestBody(requestContext));
+                            span.setTag(TracingConstant.TRACING_HTTP_HEADERS, requestContext.getHeaders().toString());
+                            span.setTag(TracingConstant.TRACING_HTTP_REQUEST_BODY, LoggingFilter.getRequestBody(requestContext));
                         }
 
                         @Override
                         public void decorateResponse(ContainerResponseContext responseContext, Span span) {
-                            span.setTag("http.response.body", util.LoggingFilter.getResponseBody(responseContext));
+                            span.setTag(TracingConstant.TRACING_HTTP_RESPONSE_BODY, LoggingFilter.getResponseBody(responseContext));
                             Tags.HTTP_STATUS.set(span, responseContext.getStatus());
                         }
                     }))

@@ -1,3 +1,5 @@
+package com.example.opentracing.quarkus;
+
 import static io.opentracing.contrib.jaxrs2.internal.SpanWrapper.PROPERTY_NAME;
 
 import javax.annotation.Priority;
