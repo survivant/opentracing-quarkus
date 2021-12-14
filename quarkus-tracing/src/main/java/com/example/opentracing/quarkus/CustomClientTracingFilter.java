@@ -12,11 +12,11 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 
 import org.eclipse.microprofile.opentracing.Traced;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import io.opentracing.Span;
 import io.opentracing.SpanContext;
@@ -33,10 +33,9 @@ import io.opentracing.tag.Tags;
 /**
  * @author Pavol Loffay
  */
-@Priority(Priorities.HEADER_DECORATOR)
+@Priority(Priorities.HEADER_DECORATOR+10)
 public class CustomClientTracingFilter implements ClientRequestFilter, ClientResponseFilter {
-
-    private static final Logger log = Logger.getLogger(CustomClientTracingFilter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(CustomClientTracingFilter.class);
 
     private Tracer tracer;
     private List<ClientSpanDecorator> spanDecorators;
@@ -49,16 +48,9 @@ public class CustomClientTracingFilter implements ClientRequestFilter, ClientRes
     @Override
     public void filter(ClientRequestContext requestContext) {
         if (tracingDisabled(requestContext)) {
-            log.finest("Client tracing disabled");
+            LOGGER.trace("Client tracing disabled");
             return;
         }
-
-        // in case filter is registered twice
-        if (requestContext.getProperty(PROPERTY_NAME) != null) {
-            return;
-        }
-
-        //final Span span = tracer.activeSpan();
 
         Tracer.SpanBuilder spanBuilder = tracer.buildSpan(requestContext.getMethod())
                 .withTag(Tags.SPAN_KIND.getKey(), Tags.SPAN_KIND_CLIENT);
@@ -81,8 +73,8 @@ public class CustomClientTracingFilter implements ClientRequestFilter, ClientRes
             }
         }
 
-        if (log.isLoggable(Level.FINEST)) {
-            log.finest("Starting client span");
+        if (LOGGER.isTraceEnabled()) {
+            LOGGER.trace("Starting client span");
         }
 
         tracer.inject(span.context(), Format.Builtin.HTTP_HEADERS, new ClientHeadersInjectTextMap(requestContext.getHeaders()));
@@ -98,7 +90,7 @@ public class CustomClientTracingFilter implements ClientRequestFilter, ClientRes
         SpanWrapper spanWrapper = CastUtils
                 .cast(requestContext.getProperty(PROPERTY_NAME), SpanWrapper.class);
         if (spanWrapper != null && !spanWrapper.isFinished()) {
-            log.finest("Finishing client span");
+            LOGGER.trace("Finishing client span");
 
             if (spanDecorators != null) {
                 for (ClientSpanDecorator decorator: spanDecorators) {
